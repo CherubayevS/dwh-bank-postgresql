@@ -1,0 +1,58 @@
+name: 'dwh_project'
+version: '1.0.0'
+
+profile: 'dwh_project'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  dwh_project:
+    +schema: ""  # ✅ Оставляем пустым, схема будет задаваться в моделях
+    # Слой STAGE (Сырые данные)
+    stage:
+      +schema: public  # ✅ Все модели в `stage` остаются в `public`
+      customers:
+        materialized: table
+      accounts:
+        materialized: table
+      bank_products:
+        materialized: table
+      transactions:
+        materialized: table
+
+    # Слой DDS (Data Vault 2.0)
+    dds:
+      hubs:
+        hub_customers:
+          materialized: table
+        hub_accounts:
+          materialized: table
+        hub_products:
+          materialized: table
+
+      satellites:
+        sat_customers:
+          materialized: incremental
+          unique_key: hub_customer_hash
+        sat_accounts:
+          materialized: incremental
+          unique_key: hub_account_hash
+        sat_customers_address:
+          materialized: incremental
+          unique_key: record_hash          
+      links:
+        link_accounts:
+          materialized: incremental
+          unique_key: link_key
+    dm:
+      customer_accounts:
+        materialized: table
